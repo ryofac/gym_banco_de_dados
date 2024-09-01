@@ -1,0 +1,4 @@
+# Crie um arquivo .env com os seguintes atributos:
+POSTGRES_USER=seu_usuario
+POSTGRES_PASSWORD=sua_senha
+POSTGRES_DB=nome_do_banco
