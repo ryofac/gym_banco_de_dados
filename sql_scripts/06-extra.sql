@@ -1,0 +1,1 @@
+SELECT 'OLÁ AMIGO!';

@@ -18,6 +18,7 @@ BEGIN
 	END IF;
 	
 	INSERT INTO ITEM_VENDA (id_produto, id_venda, quantidade) VALUES (PRODUTO_ID, VENDA_ID, QUANTIDADE);
+	RAISE INFO 'INSERINDO % PRODUTOS NA VENDA %S', quantidade, venda_id;
 	
 END;
 $$
