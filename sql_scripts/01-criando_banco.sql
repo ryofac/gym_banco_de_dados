@@ -34,7 +34,8 @@ CREATE TABLE
       id_pacote SERIAL PRIMARY KEY,
       nome VARCHAR(50),
       descricao VARCHAR(255),
-      valor DECIMAL
+      valor DECIMAL,
+      duracao_dias INT
    );
 
 CREATE TABLE

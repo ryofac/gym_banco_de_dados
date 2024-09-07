@@ -74,3 +74,39 @@ VALUES
     'Equipamento para exercícios de ciclismo'
   ),
   ('Halter', 'Equipamento para levantamento de peso');
+
+INSERT INTO
+  pacote (nome, descricao, valor, duracao_dias)
+VALUES
+  (
+    'Pacote Básico',
+    'Acesso completo às instalações e participação em aulas coletivas básicas',
+    99.99,
+    30
+  ), -- 30 dias
+  (
+    'Pacote Avançado',
+    'Inclui todas as vantagens do Pacote Básico mais acesso a aulas especializadas e personal trainer',
+    149.99,
+    60
+  ), -- 60 dias
+  (
+    'Pacote Premium',
+    'Acesso total a todas as áreas da academia, incluindo sala VIP, sessões de treinamento individualizadas e consultas nutricionais',
+    199.99,
+    90
+  ), -- 90 dias
+  (
+    'Pacote Mensal',
+    'Acesso às instalações e aulas por um mês',
+    89.99,
+    30
+  ), -- 30 dias
+  (
+    'Pacote Semestral',
+    'Acesso às instalações e aulas por seis meses com desconto especial',
+    499.99,
+    180
+  );
+
+-- 180 dias
