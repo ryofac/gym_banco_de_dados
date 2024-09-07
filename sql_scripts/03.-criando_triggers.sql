@@ -31,10 +31,11 @@ EXECUTE FUNCTION decrementar_item_comprado();
 -- Trigger que atualiza informações de uma venda quando uma linha for inserida na tabela ITEM_VENDA
 CREATE OR REPLACE FUNCTION ATUALIZAR_INFORMACOES_DA_VENDA()
 RETURNS TRIGGER AS $$
-BEGIN
-	UPDATE VENDA v SET QNT_PRODUTOS=QNT_PRODUTOS + NEW.QUANTIDADE, VALOR_TOTAL= VALOR_TOTAL + P.VALOR_UNITARIO
-	FROM ITEM_VENDA IV JOIN PRODUTO P ON P.ID_PRODUTO = IV.ID_PRODUTO
-	WHERE v.ID_VENDA = IV.ID_VENDA;
+BEGIN	
+	UPDATE venda
+  SET qnt_produtos = qnt_produtos + NEW.quantidade,
+      valor_total = valor_total + (SELECT valor_unitario FROM produto WHERE id_produto = NEW.id_produto) * NEW.quantidade
+  WHERE id_venda = NEW.id_venda;
 	RETURN NEW;
 END;
 $$
