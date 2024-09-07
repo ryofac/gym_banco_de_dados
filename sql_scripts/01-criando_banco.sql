@@ -95,12 +95,13 @@ CREATE TABLE
       id_funcionario INT REFERENCES funcionario (id_funcionario),
       qnt_produtos INT,
       valor_total DECIMAL,
-      dt_venda DATE
+      dt_venda DATE,
+      status VARCHAR(20) DEFAULT 'PENDENTE'
    );
 
 CREATE TABLE
    item_venda (
-      id_produto INT REFERENCES produto (id_produto),
-      id_venda INT REFERENCES venda (id_venda),
+      id_produto INT REFERENCES produto (id_produto) ON DELETE CASCADE,
+      id_venda INT REFERENCES venda (id_venda) ON DELETE CASCADE,
       quantidade INT
    );

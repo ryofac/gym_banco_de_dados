@@ -6,7 +6,8 @@ SELECT
   f.nome nome_funcionario,
   v.qnt_produtos,
   v.valor_total,
-  v.dt_venda
+  v.dt_venda,
+  v.status
 FROM
   cliente c
   NATURAL LEFT JOIN VENDA V
