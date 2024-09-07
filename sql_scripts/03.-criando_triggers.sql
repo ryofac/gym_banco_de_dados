@@ -1,3 +1,4 @@
+----- TRIGGERS ITEM_VENDA ------
 -- Trigger que decrementa a quantidade de um produto na tabela PRODUTO conforme for inserido em ITEM_VENDA
 CREATE OR REPLACE FUNCTION decrementar_item_comprado()
 RETURNS TRIGGER AS $$

@@ -7,6 +7,7 @@ SELECT
   v.qnt_produtos,
   v.valor_total,
   v.dt_venda,
+  v.dt_venda_final,
   v.status
 FROM
   cliente c

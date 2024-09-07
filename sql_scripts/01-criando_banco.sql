@@ -95,7 +95,8 @@ CREATE TABLE
       id_funcionario INT REFERENCES funcionario (id_funcionario),
       qnt_produtos INT,
       valor_total DECIMAL,
-      dt_venda DATE,
+      dt_venda TIMESTAMP,
+      dt_venda_final TIMESTAMP DEFAULT NULL,
       status VARCHAR(20) DEFAULT 'PENDENTE'
    );
 
