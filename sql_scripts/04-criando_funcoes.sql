@@ -12,7 +12,7 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 
-
+-- TODO: BUSCAR ANTES SE O CLIENTE E O FUNCIONARIO EXISTEM
 CREATE OR REPLACE FUNCTION INICIAR_VENDA(ID_CLIENTE INT, ID_FUNCIONARIO INT)
 RETURNS VOID AS $$
 BEGIN 
@@ -39,5 +39,44 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION confirmar_venda(VENDA_ID INT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT EXISTS (SELECT * FROM venda WHERE id_venda = VENDA_ID AND status = 'PENDENTE') THEN
+    RAISE EXCEPTION 'Venda de id % não encontrada ou já confirmada/cancelada!', VENDA_ID;
+  END IF;
+  IF (SELECT QNT_PRODUTOS FROM VENDA WHERE ID_VENDA = VENDA_ID) <= 0 THEN
+	RAISE EXCEPTION 'Venda de id % não possui produtos!', VENDA_ID;
+  END IF;
+  UPDATE VENDA SET STATUS='CONCLUIDA' WHERE ID_VENDA = VENDA_ID;
+	
+END;
+$$
+LANGUAGE PLPGSQL;
 
 
+CREATE OR REPLACE FUNCTION cancelar_venda(venda_id int)
+RETURNS VOID AS $$
+DECLARE prod RECORD;
+BEGIN
+ IF NOT EXISTS (SELECT * FROM venda WHERE id_venda = venda_id AND status = 'PENDENTE') THEN
+    RAISE EXCEPTION 'Venda de id % não encontrada ou já confirmada/cancelada!', VENDA_ID;
+  END IF;
+
+ UPDATE VENDA SET status='CANCELADO' WHERE ID_VENDA = VENDA_ID;
+
+-- RETORNA A QUANTIDADE DE PRODUTOS DA VENDA QUE ESTAVA PENDENTE PARA O ESTOQUE
+ FOR prod IN
+	 SELECT iv.id_produto, iv.quantidade, p.nome, p.qnt_em_estoque
+	    FROM item_venda iv
+	    JOIN produto p ON iv.id_produto = p.id_produto
+	    WHERE iv.id_venda = VENDA_ID
+	 LOOP
+		RAISE INFO 'Retornarndo % produtos (%) para o estoque!', prod.quantidade, prod.nome;
+	    UPDATE produto
+		SET qnt_em_estoque = prod.qnt_em_estoque + prod.quantidade
+		WHERE id_produto = prod.id_produto;
+	 END LOOP;	
+END
+$$
+LANGUAGE PLPGSQL;
