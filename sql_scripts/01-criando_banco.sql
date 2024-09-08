@@ -74,7 +74,7 @@ CREATE TABLE
 CREATE TABLE
    plano_treino (
       id_plano SERIAL PRIMARY KEY,
-      id_matricula INT REFERENCES matricula (id_matricula),
+      id_cliente INT REFERENCES cliente (id_cliente),
       id_instrutor INT REFERENCES instrutor (id_instrutor),
       objetivo VARCHAR(255),
       notas VARCHAR(255)

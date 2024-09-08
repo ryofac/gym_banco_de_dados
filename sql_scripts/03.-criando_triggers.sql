@@ -62,3 +62,73 @@ CREATE TRIGGER TRG_PREVENIR_ALTERACAO_COMPRA_FINALIZADA_CANCELADA
 BEFORE INSERT OR UPDATE ON item_venda
 FOR EACH ROW
 EXECUTE FUNCTION PREVENIR_ALTERACAO_COMPRA_FINALIZADA_CANCELADA();
+
+---- SISTEMA DE ACADEMIA ----
+CREATE OR REPLACE FUNCTION RENOVAR_MATRICULA()
+RETURNS TRIGGER AS $$
+DECLARE ultima_matricula RECORD;
+DECLARE data_referencia DATE;
+DECLARE pacote RECORD;
+DECLARE nome_cliente varchar;
+BEGIN
+	-- Populando variáveis declaradas
+	SELECT * INTO ultima_matricula FROM MATRICULA M WHERE M.ID_CLIENTE = NEW.ID_CLIENTE ORDER BY dt_vencimento desc limit 1;
+	SELECT * INTO pacote from pacote where id_pacote = NEW.ID_PACOTE;
+	SELECT nome into nome_cliente FROM CLIENTE WHERE id_cliente = NEW.ID_CLIENTE;
+
+	-- Verificando se o usuário possui já possui uma matrícula registrada 
+	IF NOT ultima_matricula is NULL THEN
+		data_referencia := ultima_matricula.dt_vencimento;
+		-- Matricula vencida, usando a data padrão 
+		IF ultima_matricula.dt_vencimento < NEW.dt_pagamento THEN
+			data_referencia := NEW.dt_pagamento;
+		END IF;
+		RAISE INFO 'Matrícula do cliente %s renovada!', nome_cliente;
+	ELSE data_referencia := NEW.dt_pagamento;
+	END IF;
+
+	NEW.dt_vencimento = data_referencia + INTERVAL '1 day' * pacote.duracao_dias; 
+	
+	RETURN NEW;
+	
+END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE TRIGGER TRG_RENOVAR_MATRICULA
+BEFORE INSERT ON MATRICULA
+FOR EACH ROW 
+EXECUTE FUNCTION RENOVAR_MATRICULA();
+
+
+-- Aplica uma multa para uma matrícula, caso ela não tenha sido renovada dentro do prazo:
+CREATE OR REPLACE FUNCTION aplicar_multa()
+RETURNS TRIGGER AS $$
+DECLARE
+    dias_atraso INT;
+    valor_multa DECIMAL;
+BEGIN
+		-- pegar o ultimo registro do cara na tabela
+		-- verificar a data de vencimento, se for menor que hoje, aplica multa
+
+    -- Verificar se a data de pagamento é posterior à data de vencimento
+    IF NEW.dt_pagamento > NEW.dt_vencimento THEN
+        -- Calcular o número de dias de atraso
+        dias_atraso := NEW.dt_pagamento - NEW.dt_vencimento;
+
+        -- Definir o valor da multa (Exemplo: 2% do valor total por dia de atraso)
+        valor_multa := (NEW.valor_pago * 0.02 * dias_atraso);
+
+        -- Atualizar o valor pago com a multa
+        NEW.valor_pago := NEW.valor_pago + valor_multa;
+
+        RAISE NOTICE 'Multa aplicada: R$%, por % dias de atraso.', valor_multa, dias_atraso;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_aplicar_multa
+BEFORE INSERT OR UPDATE ON matricula
+FOR EACH ROW
+EXECUTE FUNCTION aplicar_multa();

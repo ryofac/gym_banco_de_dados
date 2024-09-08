@@ -15,6 +15,29 @@ $$ LANGUAGE plpgsql;
 -- TODO: DELECAO GENERICA
 -- TODO: ATUALIZACAO GENERICA
 
+-- -- Funcao que verifica a existencia de um dado
+-- CREATE OR REPLACE FUNCTION verificar_existencia_tabela(
+--     tabela_nome TEXT,    
+--     pk_coluna TEXT,      
+--     pk_valor INT 
+-- )
+-- RETURNS VOID AS $$
+-- DECLARE
+--     query TEXT;
+-- BEGIN
+--     query := format(
+--         'SELECT 1 FROM %I WHERE %I = $1',
+--         tabela_nome,  -- Nome da tabela
+--         pk_coluna     -- Nome da coluna da chave primária
+--     );
+
+--     IF NOT EXISTS (EXECUTE query USING pk_valor) THEN
+--         RAISE EXCEPTION 'Registro com % = % não encontrado na tabela %!',
+--             pk_coluna, pk_valor, tabela_nome;
+--     END IF;
+-- END;
+-- $$ LANGUAGE plpgsql;
+
 ----- FUNCOES VENDA -----
 -- TODO: BUSCAR ANTES SE O CLIENTE E O FUNCIONARIO EXISTEM
 CREATE OR REPLACE FUNCTION INICIAR_VENDA(ID_CLIENTE INT, ID_FUNCIONARIO INT)
@@ -86,9 +109,7 @@ $$
 LANGUAGE PLPGSQL;
 
 ----- FUNCOES ACADEMIA -----
-
--- Função que realiza a matrícula de um cliente previamente registrado e atualiza caso ele já tenha se matriculado alguma vez
--- TODO: Adicionar esquema de multa caso a data da realização da matrícula seja maior que a data de vencimento 
+-- Realiza a matricula de um cliente, dado o id e o funcionario e o pacote
 CREATE OR REPLACE FUNCTION REALIZAR_MATRICULA(CLIENTE_ID INT, FUNCIONARIO_ID INT, PACOTE_ID INT)
 RETURNS VOID AS $$
 DECLARE pacote RECORD;
@@ -97,7 +118,7 @@ BEGIN
 	-- Validação de existencia dos ids
 	IF NOT EXISTS(SELECT * FROM CLIENTE C WHERE C.ID_CLIENTE = CLIENTE_ID) THEN
 			RAISE EXCEPTION 'Cliente de id % não encontrado!', VENDA_ID;
-		END IF;
+	END IF;
 
 	IF NOT EXISTS(SELECT * FROM FUNCIONARIO F WHERE F.ID_FUNCIONARIO = FUNCIONARIO_ID) THEN
 		RAISE EXCEPTION 'Funcionário de id % não encontrado!', FUNCIONARIO_ID;
@@ -110,16 +131,10 @@ BEGIN
 	-- Populando as variáveis declaradas
 	SELECT nome into nome_cliente FROM CLIENTE WHERE id_cliente = cliente_id;
 	SELECT * INTO pacote from pacote where id_pacote = PACOTE_ID;
-
-	-- Verificando se já existe algum registro vinculado aquele cliente, se sim, atualiza ele
-	IF EXISTS (SELECT * FROM MATRICULA WHERE ID_CLIENTE = CLIENTE_ID) THEN
-		RAISE INFO 'Matrícula do cliente %s renovada', nome_cliente;
-		UPDATE MATRICULA SET DT_PAGAMENTO=NOW(), DT_VENCIMENTO=DT_PAGAMENTO + INTERVAL '1 day' * pacote.duracao_dias WHERE ID_CLIENTE = CLIENTE_ID;
-		RETURN;
-	END IF;
 	
 	-- Registrando uma nova matrícula
+	INSERT INTO MATRICULA(id_cliente, id_funcionario, id_pacote, valor_pago, dt_pagamento, dt_vencimento) VALUES 
+	(CLIENTE_ID, FUNCIONARIO_ID, PACOTE_ID, pacote.valor, NOW(), NOW() + INTERVAL '1 day' * pacote.duracao_dias);
 	RAISE INFO 'Matrícula do cliente %s registrada', nome_cliente;
-	INSERT INTO MATRICULA(id_cliente, id_funcionario, id_pacote, valor_pago, dt_pagamento, dt_vencimento) VALUES (CLIENTE_ID, FUNCIONARIO_ID, PACOTE_ID, pacote.valor, NOW(), NOW() + INTERVAL '1 day' * pacote.duracao_dias);
 END;
 $$ LANGUAGE PLPGSQL;
