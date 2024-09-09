@@ -3,7 +3,8 @@ CREATE TABLE
    cliente (
       id_cliente SERIAL PRIMARY KEY,
       nome VARCHAR(255),
-      cpf VARCHAR(11)
+      cpf VARCHAR(11),
+      eh_ativo BOOLEAN DEFAULT FALSE
    );
 
 CREATE TABLE
