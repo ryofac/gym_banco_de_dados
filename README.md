@@ -30,4 +30,12 @@
 
 ## TODO
 
-[] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, automaticamente são inativados)
+- [ ] Adicionar esquema de inserir exercícios em um plano de treino
+- [ ] Adicionar funções genéricas de remoção e alteração de dados
+- [ ] Adicionar desconto nos produtos, caso o cliente esteja com a matrícula ativa na academia
+- [ ] Não vender para clientes que estão com a mensalidade atrasada (fds vai ser assim)
+- [ ] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, não podem ter planos de treino)
+- [ ] Normalizar o atributo status da venda (tabela separada, levando o id)
+- [ ] Analisar se o plano de treino está sendo implementado da melhor forma
+- [ ] Funções de relatório (Obter lucro com matrículas entre X e Y, quantos clientes novos cadastrados, quantas vendas realizadas, etc.)
+- [ ] Controle de permissões (Criar usuários, grupos e roles interagindo com views)
