@@ -47,7 +47,7 @@ CREATE TABLE
    exercicio (
       id_exercicio SERIAL PRIMARY KEY,
       id_eq INT REFERENCES equipamento (id_eq) NULL,
-      id_tipo_exercicio INT REFERENCES tipo_exercicio (id_tipo_exercicio),
+      id_tipo_exercicio INT REFERENCES tipo_exercicio (id_tipo_exercicio) ON DELETE CASCADE,
       nome VARCHAR(50)
    );
 
@@ -82,8 +82,8 @@ CREATE TABLE
 
 CREATE TABLE
    plano_treino_exercicio (
-      id_exercicio INT REFERENCES exercicio (id_exercicio),
-      id_plano INT REFERENCES plano_treino (id_plano),
+      id_exercicio INT REFERENCES exercicio (id_exercicio) ON DELETE CASCADE,
+      id_plano INT REFERENCES plano_treino (id_plano) ON DELETE CASCADE,
       repeticoes INT,
       carga DECIMAL
    );
