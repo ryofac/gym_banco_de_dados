@@ -184,35 +184,35 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
--- -- TODO: TERMINAR!
--- CREATE OR REPLACE FUNCTION VISUALIZAR_PLANO_TREINO(CLIENTE_ID INT)
--- RETURNS TABLE 
--- (
--- 	nome_exercicio VARCHAR, 
--- 	equipamento VARCHAR, 
--- 	carga NUMERIC, 
--- 	repeticoes INT
--- ) 
--- AS $$
--- DECLARE PLANO_DETALHADO RECORD;
--- BEGIN	
--- 	RETURN QUERY
--- 	SELECT 
--- 		e.nome nome_exercicio,
--- 		eq.nome equipamento,
--- 		pte.carga carga,
--- 		pte.repeticoes repeticoes
--- 	FROM PLANO_TREINO pt
--- 	JOIN CLIENTE c 
--- 	ON c.id_plano = pt.id_plano 
--- 	AND c.id_cliente = CLIENTE_ID
--- 	JOIN PLANO_TREINO_EXERCICIO pte
--- 	ON pt.id_plano = pte.id_plano
--- 	JOIN exercicio e 
--- 	ON e.id_exercicio = pte.id_exercicio
--- 	RIGHT JOIN equipamento eq ON e.id_eq = eq.id_eq;
+-- TODO: TERMINAR!
+CREATE OR REPLACE FUNCTION VISUALIZAR_PLANO_TREINO(CLIENTE_ID INT)
+RETURNS TABLE 
+(
+	nome_exercicio VARCHAR, 
+	equipamento VARCHAR, 
+	carga NUMERIC, 
+	repeticoes INT
+) 
+AS $$
+DECLARE PLANO_DETALHADO RECORD;
+BEGIN	
+	RETURN QUERY
+	SELECT 
+		e.nome nome_exercicio,
+		eq.nome equipamento,
+		pte.carga carga,
+		pte.repeticoes repeticoes
+	FROM PLANO_TREINO pt
+	JOIN CLIENTE c 
+	ON c.id_plano = pt.id_plano 
+	AND c.id_cliente = CLIENTE_ID
+	JOIN PLANO_TREINO_EXERCICIO pte
+	ON pt.id_plano = pte.id_plano
+	JOIN exercicio e 
+	ON e.id_exercicio = pte.id_exercicio
+	RIGHT JOIN equipamento eq ON e.id_eq = eq.id_eq;
 	
--- END;
--- $$ LANGUAGE PLPGSQL;
+END;
+$$ LANGUAGE PLPGSQL;
 
--- SELECT * FROM VISUALIZAR_PLANO_TREINO(1);
+SELECT * FROM VISUALIZAR_PLANO_TREINO(1);
