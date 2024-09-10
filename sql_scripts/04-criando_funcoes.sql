@@ -135,6 +135,32 @@ BEGIN
 	-- Registrando uma nova matrícula
 	INSERT INTO MATRICULA(id_cliente, id_funcionario, id_pacote, valor_pago, dt_pagamento, dt_vencimento) VALUES 
 	(CLIENTE_ID, FUNCIONARIO_ID, PACOTE_ID, pacote.valor, NOW(), NOW() + INTERVAL '1 day' * pacote.duracao_dias);
-	RAISE INFO 'Matrícula do cliente %s registrada', nome_cliente;
+	RAISE INFO 'Matrícula do cliente %s recebida!', nome_cliente;
 END;
 $$ LANGUAGE PLPGSQL;
+
+-- Cria um plano de treino, dado o instrutor, o cliente, o objetivo e notas
+CREATE OR REPLACE FUNCTION CRIAR_PLANO_DE_TREINO(CLIENTE_ID INT, INSTRUTOR_ID INT, objetivo VARCHAR, notas VARCHAR)
+RETURNS VOID AS $$
+DECLARE cliente_existente RECORD;
+DECLARE id_novo_plano int;
+BEGIN
+	SELECT * INTO cliente_existente from CLIENTE C WHERE C.ID_CLIENTE = CLIENTE_ID;
+
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Cliente de id % não existe!', CLIENTE_ID;
+	END IF;
+	
+	IF cliente_existente.id_plano IS NOT NULL THEN
+		RAISE EXCEPTION 'Cliente de id % já possui um plano de treino assossiado! Exclua-o primeiro', CLIENTE_ID;
+	END IF;
+
+	IF NOT EXISTS(SELECT * FROM instrutor i  WHERE i.id_instrutor = INSTRUTOR_ID) THEN
+			RAISE EXCEPTION 'Instrutor de id % não encontrado!', INSTRUTOR_ID;
+	END IF;
+	
+	INSERT INTO plano_treino VALUES (DEFAULT, INSTRUTOR_ID, objetivo, notas) RETURNING id_plano into id_novo_plano;
+	UPDATE CLIENTE SET ID_PLANO = id_novo_plano WHERE ID_CLIENTE = CLIENTE_ID;
+
+END;
+$$ LANGUAGE plpgsql;

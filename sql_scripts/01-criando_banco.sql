@@ -1,12 +1,3 @@
--- Entidades base
-CREATE TABLE
-   cliente (
-      id_cliente SERIAL PRIMARY KEY,
-      nome VARCHAR(255),
-      cpf VARCHAR(11),
-      eh_ativo BOOLEAN DEFAULT FALSE
-   );
-
 CREATE TABLE
    produto (
       id_produto SERIAL PRIMARY KEY,
@@ -52,18 +43,6 @@ CREATE TABLE
       regiao_trabalhada VARCHAR(50)
    );
 
--- Sistema base da academia:
-CREATE TABLE
-   matricula (
-      id_matricula SERIAL PRIMARY KEY,
-      id_cliente INT REFERENCES cliente (id_cliente),
-      id_funcionario INT REFERENCES funcionario (id_funcionario),
-      id_pacote INT REFERENCES pacote (id_pacote),
-      valor_pago DECIMAL,
-      dt_pagamento DATE,
-      dt_vencimento DATE
-   );
-
 CREATE TABLE
    exercicio (
       id_exercicio SERIAL PRIMARY KEY,
@@ -75,10 +54,30 @@ CREATE TABLE
 CREATE TABLE
    plano_treino (
       id_plano SERIAL PRIMARY KEY,
-      id_cliente INT REFERENCES cliente (id_cliente),
       id_instrutor INT REFERENCES instrutor (id_instrutor),
       objetivo VARCHAR(255),
       notas VARCHAR(255)
+   );
+
+-- Entidades base
+CREATE TABLE
+   cliente (
+      id_cliente SERIAL PRIMARY KEY,
+      id_plano INT REFERENCES PLANO_TREINO (id_plano) ON DELETE SET NULL DEFAULT NULL,
+      nome VARCHAR(255),
+      cpf VARCHAR(11) UNIQUE
+   );
+
+-- Sistema base da academia:
+CREATE TABLE
+   matricula (
+      id_matricula SERIAL PRIMARY KEY,
+      id_cliente INT REFERENCES cliente (id_cliente),
+      id_funcionario INT REFERENCES funcionario (id_funcionario),
+      id_pacote INT REFERENCES pacote (id_pacote),
+      valor_pago DECIMAL,
+      dt_pagamento DATE,
+      dt_vencimento DATE
    );
 
 CREATE TABLE

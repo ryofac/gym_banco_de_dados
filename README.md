@@ -27,3 +27,7 @@
 - **`docker-compose.yml`**: Arquivo de configuração do Docker Compose que define os serviços, volumes e redes.
 - **`dot-env-example`**: Exemplo de arquivo de variáveis de ambiente. Renomeie para `.env` e ajuste conforme necessário.
 - **`sql-scripts/`**: Diretório contendo os scripts SQL a serem executados no banco de dados automaticamente assim que o container subir.
+
+## TODO
+
+[] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, automaticamente são inativados)
