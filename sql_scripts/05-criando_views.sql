@@ -16,3 +16,18 @@ FROM
   JOIN cliente C ON M.id_cliente = C.id_cliente
   JOIN funcionario f ON F.id_funcionario = M.id_funcionario
   JOIN PACOTE P ON P.id_pacote = M.id_pacote;
+
+CREATE VIEW
+  INFORMACOES_VENDAS AS
+SELECT
+  v.id_venda,
+  c.nome nome_cliente,
+  f.nome nome_funcionario,
+  v.qnt_produtos,
+  v.valor_total,
+  v.dt_venda,
+  v.status
+FROM
+  cliente c
+  NATURAL LEFT JOIN VENDA V
+  JOIN funcionario f ON f.id_funcionario = v.id_funcionario;
