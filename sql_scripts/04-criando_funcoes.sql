@@ -164,3 +164,55 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+-- Adiciona um exercício à um plano de treino
+CREATE OR REPLACE FUNCTION ADICIONAR_EXERICIO_NO_TREINO(PLANO_ID INT, EXERCICIO_ID INT, REPETICOES INT, CARGA INT)
+RETURNS VOID AS $$
+BEGIN
+	IF NOT EXISTS(SELECT * FROM PLANO_TREINO WHERE ID_PLANO = PLANO_ID) THEN
+		RAISE EXCEPTION 'Treino % não existe!', PLANO_ID;
+	END IF;
+	
+	IF NOT EXISTS(SELECT * FROM EXERCICIO WHERE ID_EXERCICIO = EXERCICIO_ID) THEN
+		RAISE EXCEPTION 'Exercício % não existe!', TREINO_ID;
+	END IF;
+	
+	INSERT INTO PLANO_TREINO_EXERCICIO VALUES(EXERCICIO_ID, PLANO_ID, REPETICOES, CARGA);
+
+
+END;
+$$
+LANGUAGE PLPGSQL;
+
+-- -- TODO: TERMINAR!
+-- CREATE OR REPLACE FUNCTION VISUALIZAR_PLANO_TREINO(CLIENTE_ID INT)
+-- RETURNS TABLE 
+-- (
+-- 	nome_exercicio VARCHAR, 
+-- 	equipamento VARCHAR, 
+-- 	carga NUMERIC, 
+-- 	repeticoes INT
+-- ) 
+-- AS $$
+-- DECLARE PLANO_DETALHADO RECORD;
+-- BEGIN	
+-- 	RETURN QUERY
+-- 	SELECT 
+-- 		e.nome nome_exercicio,
+-- 		eq.nome equipamento,
+-- 		pte.carga carga,
+-- 		pte.repeticoes repeticoes
+-- 	FROM PLANO_TREINO pt
+-- 	JOIN CLIENTE c 
+-- 	ON c.id_plano = pt.id_plano 
+-- 	AND c.id_cliente = CLIENTE_ID
+-- 	JOIN PLANO_TREINO_EXERCICIO pte
+-- 	ON pt.id_plano = pte.id_plano
+-- 	JOIN exercicio e 
+-- 	ON e.id_exercicio = pte.id_exercicio
+-- 	RIGHT JOIN equipamento eq ON e.id_eq = eq.id_eq;
+	
+-- END;
+-- $$ LANGUAGE PLPGSQL;
+
+-- SELECT * FROM VISUALIZAR_PLANO_TREINO(1);
