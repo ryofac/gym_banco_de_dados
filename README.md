@@ -30,9 +30,9 @@
 
 ## TODO
 
-- [ ] Adicionar esquema de inserir exercícios em um plano de treino
+- [x] Adicionar esquema de inserir exercícios em um plano de treino
 - [ ] Adicionar funções genéricas de remoção e alteração de dados
-- [ ] Adicionar desconto nos produtos, caso o cliente esteja com a matrícula ativa na academia
+- [x] Adicionar desconto nos produtos, caso o cliente esteja com a matrícula ativa na academia
 - [ ] Não vender para clientes que estão com a mensalidade atrasada (fds vai ser assim)
 - [ ] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, não podem ter planos de treino)
 - [ ] Normalizar o atributo status da venda (tabela separada, levando o id)
