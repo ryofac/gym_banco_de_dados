@@ -37,12 +37,12 @@
 - [x] Adicionar desconto nos produtos, caso o cliente esteja com a matrícula ativa na academia
 - [x] Conferir se o cliente e funcionário existem ao realizar a venda
 - [ ] Funções de relatório (Obter lucro com matrículas entre X e Y, quantos clientes novos cadastrados, quantas vendas realizadas, etc.)
-- [ ] Controle de permissões (Criar usuários, grupos e roles interagindo com views)
+- [x] Controle de permissões (Criar usuários, grupos e roles interagindo com views)
+- [ ] Adicionar dias da semana junto ao plano de treino
 
 ### Melhorias
 
 - [x] Sistema de auditoria
-- [ ] ( Quase que obrigatório ) Adicionar dias da semana junto com o plano de treino
 - [x] Não vender para clientes que estão com a mensalidade atrasada
 - [ ] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, não podem ter planos de treino)
 - [ ] Normalizar o atributo status da venda (tabela separada, levando o id)
