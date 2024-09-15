@@ -12,32 +12,38 @@ EXCEPTION
         RAISE EXCEPTION 'Erro ao inserir dados: %', SQLERRM;
 END;
 $$ LANGUAGE plpgsql;
--- TODO: DELECAO GENERICA
--- TODO: ATUALIZACAO GENERICA
 
--- -- Funcao que verifica a existencia de um dado
--- CREATE OR REPLACE FUNCTION verificar_existencia_tabela(
---     tabela_nome TEXT,    
---     pk_coluna TEXT,      
---     pk_valor INT 
--- )
--- RETURNS VOID AS $$
--- DECLARE
---     query TEXT;
--- BEGIN
---     query := format(
---         'SELECT 1 FROM %I WHERE %I = $1',
---         tabela_nome,  -- Nome da tabela
---         pk_coluna     -- Nome da coluna da chave primária
---     );
 
---     IF NOT EXISTS (EXECUTE query USING pk_valor) THEN
---         RAISE EXCEPTION 'Registro com % = % não encontrado na tabela %!',
---             pk_coluna, pk_valor, tabela_nome;
---     END IF;
--- END;
--- $$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION alterar_dado(tabela TEXT, atualizacao TEXT, condicao TEXT) RETURNS VOID AS $$
+DECLARE
+    sql_command TEXT;
+BEGIN
+    -- Construa o comando SQL dinâmico para atualização
+    sql_command := FORMAT('UPDATE %I SET %s WHERE %s', tabela, atualizacao, condicao);
+    
+    EXECUTE sql_command;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Erro ao alterar dado: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql;
 
+
+
+CREATE OR REPLACE FUNCTION remover_dado(tabela TEXT, condicao TEXT) RETURNS VOID AS $$
+DECLARE
+    sql_command TEXT;
+BEGIN    
+    -- Construa o comando SQL dinâmico para remoção
+    sql_command := FORMAT('DELETE FROM %I WHERE %s', tabela, condicao);
+    
+    EXECUTE sql_command;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Erro ao remover dado: %', SQLERRM;
+END;
+
+$$ LANGUAGE plpgsql;
 ----- FUNCOES VENDA -----
 CREATE OR REPLACE FUNCTION INICIAR_VENDA(ID_CLIENTE INT, ID_FUNCIONARIO INT)
 RETURNS VOID AS $$
@@ -57,8 +63,11 @@ BEGIN
         RAISE EXCEPTION 'Cliente de id % não possui matrícula ativa!', ID_CLIENTE;
     END IF;
 
-	INSERT INTO VENDA (ID_VENDA, ID_CLIENTE, ID_FUNCIONARIO, QNT_PRODUTOS, VALOR_TOTAL, DT_VENDA)
-    VALUES(DEFAULT, ID_CLIENTE, ID_FUNCIONARIO, 0, 0, NOW());
+	 PERFORM INSERIR_DADOS(
+        'venda', 
+        'id_cliente, id_funcionario, qnt_produtos, valor_total, dt_venda', 
+        format('DEFAULT, %s, %s, 0, 0, NOW()', ID_CLIENTE, ID_FUNCIONARIO)
+    );
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -74,7 +83,12 @@ BEGIN
 		RAISE EXCEPTION 'Produto de id % não encontrado!', PRODUTO_ID;
 	END IF;
 	
-	INSERT INTO ITEM_VENDA (id_produto, id_venda, quantidade) VALUES (PRODUTO_ID, VENDA_ID, QUANTIDADE);
+	PERFORM INSERIR_DADOS(
+        'item_venda', 
+        'id_produto, id_venda, quantidade', 
+        format('%s, %s, %s', PRODUTO_ID, VENDA_ID, QUANTIDADE)
+  );
+
 	RAISE INFO 'INSERINDO % PRODUTOS NA VENDA %S', quantidade, venda_id;
 	
 END;
@@ -90,8 +104,11 @@ BEGIN
   IF (SELECT QNT_PRODUTOS FROM VENDA WHERE ID_VENDA = VENDA_ID) <= 0 THEN
 	RAISE EXCEPTION 'Venda de id % não possui produtos!', VENDA_ID;
   END IF;
-  UPDATE VENDA SET STATUS='CONCLUIDA', dt_venda_final=NOW() WHERE ID_VENDA = VENDA_ID;
-	
+  PERFORM ALTERAR_DADO(
+        'venda', 
+        'status = ''CONCLUIDA'', dt_venda_final = NOW()', 
+        FORMAT('id_venda = %s', VENDA_ID)
+    );
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -148,9 +165,12 @@ BEGIN
 	SELECT * INTO pacote from pacote where id_pacote = PACOTE_ID;
 	
 	-- Registrando uma nova matrícula
-	INSERT INTO MATRICULA(id_cliente, id_funcionario, id_pacote, valor_pago, dt_pagamento, dt_vencimento) VALUES 
-	(CLIENTE_ID, FUNCIONARIO_ID, PACOTE_ID, pacote.valor, NOW(), NOW() + INTERVAL '1 day' * pacote.duracao_dias);
-	RAISE INFO 'Matrícula do cliente %s recebida!', nome_cliente;
+	PERFORM INSERIR_DADOS(
+        'matricula',
+        'id_cliente, id_funcionario, id_pacote, valor_pago, dt_pagamento, dt_vencimento',
+        FORMAT('%s, %s, %s, %s, NOW(), NOW() + INTERVAL ''1 day'' * %s', 
+            CLIENTE_ID, FUNCIONARIO_ID, PACOTE_ID, pacote.valor, pacote.duracao_dias)
+  );
 END;
 $$ LANGUAGE PLPGSQL;
 
@@ -174,8 +194,22 @@ BEGIN
 			RAISE EXCEPTION 'Instrutor de id % não encontrado!', INSTRUTOR_ID;
 	END IF;
 	
-	INSERT INTO plano_treino VALUES (DEFAULT, INSTRUTOR_ID, objetivo, notas) RETURNING id_plano into id_novo_plano;
-	UPDATE CLIENTE SET ID_PLANO = id_novo_plano WHERE ID_CLIENTE = CLIENTE_ID;
+	-- Inserir novo plano de treino usando a função INSERIR_DADOS
+    PERFORM INSERIR_DADOS(
+        'plano_treino',
+        'id_instrutor, objetivo, notas',
+        FORMAT('%s, %L, %L', INSTRUTOR_ID, objetivo, notas)
+    );
+
+    -- Recuperar o ID do novo plano de treino (último ID inserido)
+    SELECT currval(pg_get_serial_sequence('plano_treino', 'id_plano')) INTO id_novo_plano;
+
+    -- Atualizar o cliente com o ID do novo plano de treino usando a função ALTERAR_DADO
+    PERFORM ALTERAR_DADO(
+        'cliente', 
+        FORMAT('id_plano = %s', id_novo_plano), 
+        FORMAT('id_cliente = %s', CLIENTE_ID)
+    );
 
 END;
 $$ LANGUAGE plpgsql;
@@ -192,7 +226,13 @@ BEGIN
 		RAISE EXCEPTION 'Exercício % não existe!', TREINO_ID;
 	END IF;
 	
-	INSERT INTO PLANO_TREINO_EXERCICIO VALUES(EXERCICIO_ID, PLANO_ID, REPETICOES, CARGA);
+	PERFORM INSERIR_DADOS(
+        'plano_treino_exercicio',
+        'id_exercicio, id_plano, repeticoes, carga',
+        FORMAT('%s, %s, %s, %s', EXERCICIO_ID, PLANO_ID, REPETICOES, CARGA)
+    );
+
+  RAISE INFO 'Exercício % adicionado ao plano de treino %!', EXERCICIO_ID, PLANO_ID;
 
 
 END;
