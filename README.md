@@ -33,7 +33,7 @@
 ### Core:
 
 - [x] Adicionar esquema de inserir exercícios em um plano de treino
-- [ ] Funções de atualizar e deletar genéricas
+- [x] Funções de atualizar e deletar genéricas
 - [x] Adicionar desconto nos produtos, caso o cliente esteja com a matrícula ativa na academia
 - [x] Conferir se o cliente e funcionário existem ao realizar a venda
 - [ ] Funções de relatório (Obter lucro com matrículas entre X e Y, quantos clientes novos cadastrados, quantas vendas realizadas, etc.)
@@ -41,6 +41,7 @@
 
 ### Melhorias
 
+- [ ] ( Quase que obrigatório ) Adicionar dias da semana junto com o plano de treino
 - [x] Não vender para clientes que estão com a mensalidade atrasada
 - [ ] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, não podem ter planos de treino)
 - [ ] Normalizar o atributo status da venda (tabela separada, levando o id)

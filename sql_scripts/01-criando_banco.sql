@@ -107,3 +107,6 @@ CREATE TABLE
       id_venda INT REFERENCES venda (id_venda) ON DELETE CASCADE,
       quantidade INT
    );
+
+CREATE TABLE
+   sequencia ()

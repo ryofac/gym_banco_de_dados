@@ -96,7 +96,7 @@ $$
 LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE FUNCTION confirmar_venda(VENDA_ID INT)
-RETURNS VOID AS $$
+RETURNS VOID AS $$  
 BEGIN
   IF NOT EXISTS (SELECT * FROM venda WHERE id_venda = VENDA_ID AND status = 'PENDENTE') THEN
     RAISE EXCEPTION 'Venda de id % não encontrada ou já confirmada/cancelada!', VENDA_ID;
@@ -239,7 +239,7 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
--- TODO: TERMINAR!
+
 CREATE OR REPLACE FUNCTION VISUALIZAR_PLANO_TREINO(CLIENTE_ID INT)
 RETURNS TABLE 
 (
@@ -249,8 +249,12 @@ RETURNS TABLE
 	repeticoes INT
 ) 
 AS $$
-DECLARE PLANO_DETALHADO RECORD;
 BEGIN	
+	
+	IF (SELECT ID_PLANO FROM CLIENTE WHERE id_cliente = CLIENTE_ID) IS NULL THEN
+		RAISE EXCEPTION 'Cliente de id % não possui nenhum plano de treino vinculado', CLIENTE_ID;
+    END IF;
+
 	RETURN QUERY
 	SELECT 
 		e.nome nome_exercicio,
@@ -265,9 +269,7 @@ BEGIN
 	ON pt.id_plano = pte.id_plano
 	JOIN exercicio e 
 	ON e.id_exercicio = pte.id_exercicio
-	RIGHT JOIN equipamento eq ON e.id_eq = eq.id_eq;
+	LEFT JOIN equipamento eq ON e.id_eq = eq.id_eq;
 	
 END;
 $$ LANGUAGE PLPGSQL;
-
-SELECT * FROM VISUALIZAR_PLANO_TREINO(1);
