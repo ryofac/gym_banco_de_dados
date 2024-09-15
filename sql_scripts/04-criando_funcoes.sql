@@ -45,32 +45,56 @@ END;
 
 $$ LANGUAGE plpgsql;
 ----- FUNCOES VENDA -----
-CREATE OR REPLACE FUNCTION INICIAR_VENDA(ID_CLIENTE INT, ID_FUNCIONARIO INT)
+CREATE OR REPLACE FUNCTION INICIAR_VENDA(CLIENTE_ID INT, FUNCIONARIO_ID INT)
 RETURNS VOID AS $$
+DECLARE ultima_matricula_do_cliente RECORD;
 BEGIN 
     -- Conferir se o cliente existe
-    IF NOT EXISTS(SELECT * FROM CLIENTE C WHERE C.ID_CLIENTE = ID_CLIENTE) THEN
-        RAISE EXCEPTION 'Cliente de id % não encontrado!', ID_CLIENTE;
+    IF NOT EXISTS(SELECT * FROM CLIENTE C WHERE C.ID_CLIENTE = CLIENTE_ID) THEN
+        RAISE EXCEPTION 'Cliente de id % não encontrado!', CLIENTE_ID;
     END IF;
 
     -- Conferir se o funcionário existe
-    IF NOT EXISTS(SELECT * FROM FUNCIONARIO F WHERE F.ID_FUNCIONARIO = ID_FUNCIONARIO) THEN
-        RAISE EXCEPTION 'Funcionário de id % não encontrado!', ID_FUNCIONARIO;
+    IF NOT EXISTS(SELECT * FROM FUNCIONARIO F WHERE F.ID_FUNCIONARIO = FUNCIONARIO_ID) THEN
+        RAISE EXCEPTION 'Funcionário de id % não encontrado!', FUNCIONARIO_ID;
     END IF;
+	
+	SELECT * into ultima_matricula_do_cliente FROM OBTER_ULTIMA_MATRICULA_DO_CLIENTE(CLIENTE_ID);
 
-    -- Não vender para clientes que estão com a mensalidade atrasada
-    IF NOT EXISTS(SELECT * FROM OBTER_ULTIMA_MATRICULA_DO_CLIENTE(ID_CLIENTE)) THEN
-        RAISE EXCEPTION 'Cliente de id % não possui matrícula ativa!', ID_CLIENTE;
-    END IF;
+     -- Não vender para clientes que estão com a mensalidade atrasada
+     IF ultima_matricula_do_cliente IS NOT NULL THEN
+		IF (ultima_matricula_do_cliente.dt_vencimento > NOW()) THEN
+        	RAISE EXCEPTION 'Cliente de id % É CALOREIRO, está com a matrícula atrasada!', CLIENTE_ID;
+		END IF;
+     END IF;
 
 	 PERFORM INSERIR_DADOS(
         'venda', 
         'id_cliente, id_funcionario, qnt_produtos, valor_total, dt_venda', 
-        format('DEFAULT, %s, %s, 0, 0, NOW()', ID_CLIENTE, ID_FUNCIONARIO)
+        format(' %s, %s, 0, 0, NOW()', CLIENTE_ID, FUNCIONARIO_ID)
     );
 END;
 $$
 LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION VISUALIZAR_VENDAS(CLIENTE_ID INT)
+RETURNS TABLE (nome_funcionario VARCHAR, qnt_produtos int, valor_total decimal(10, 2), dt_venda TIMESTAMP, esta_ativa BOOLEAN)
+AS $$
+BEGIN
+	RETURN QUERY
+	SELECT
+ 	  f.nome nome_funcionario,
+	  v.qnt_produtos,
+	  v.valor_total,
+	  v.dt_venda,
+	  v.status <> 'CONCLUIDA' AND v.status <> 'CANCELADA' esta_ativa
+	FROM
+	  cliente c
+	  NATURAL LEFT JOIN VENDA V
+	  JOIN funcionario f ON f.id_funcionario = v.id_funcionario;
+	
+END
+$$ LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE FUNCTION registrar_produto_na_compra(VENDA_ID INT, PRODUTO_ID INT , QUANTIDADE INT)
 RETURNS VOID AS $$
@@ -114,7 +138,7 @@ $$
 LANGUAGE PLPGSQL;
 
 
-CREATE OR REPLACE FUNCTION cancelar_venda(venda_id int)
+CREATE OR REPLACE FUNCTION CANCELAR_VENDA(venda_id int)
 RETURNS VOID AS $$
 DECLARE prod RECORD;
 BEGIN
@@ -215,7 +239,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Adiciona um exercício à um plano de treino
-CREATE OR REPLACE FUNCTION ADICIONAR_EXERICIO_NO_TREINO(PLANO_ID INT, EXERCICIO_ID INT, REPETICOES INT, CARGA INT)
+CREATE OR REPLACE FUNCTION ADICIONAR_EXERCICIO_NO_TREINO(PLANO_ID INT, EXERCICIO_ID INT, REPETICOES INT, CARGA INT)
 RETURNS VOID AS $$
 BEGIN
 	IF NOT EXISTS(SELECT * FROM PLANO_TREINO WHERE ID_PLANO = PLANO_ID) THEN
@@ -272,4 +296,24 @@ BEGIN
 	LEFT JOIN equipamento eq ON e.id_eq = eq.id_eq;
 	
 END;
+$$ LANGUAGE PLPGSQL;
+
+
+CREATE FUNCTION VISUALIZAR_VENDAS_DO_CLIENTE(CLIENTE_ID INT)
+RETURNS TABLE (nome_funcionario VARCHAR, qnt_produtos int, valor_total decimal(10, 2), dt_venda TIMESTAMP, esta_ativa BOOLEAN)
+AS $$
+BEGIN
+	RETURN QUERY
+	SELECT
+ 	  f.nome nome_funcionario,
+	  v.qnt_produtos,
+	  v.valor_total,
+	  v.dt_venda,
+	  v.status <> 'CONCLUIDA' OR v.status <> 'PENDENTE' esta_ativa
+	FROM
+	  cliente c
+	  NATURAL LEFT JOIN VENDA V
+	  JOIN funcionario f ON f.id_funcionario = v.id_funcionario;
+	
+END
 $$ LANGUAGE PLPGSQL;

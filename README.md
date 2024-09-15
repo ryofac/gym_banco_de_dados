@@ -41,6 +41,7 @@
 
 ### Melhorias
 
+- [x] Sistema de auditoria
 - [ ] ( Quase que obrigatório ) Adicionar dias da semana junto com o plano de treino
 - [x] Não vender para clientes que estão com a mensalidade atrasada
 - [ ] Adicionar clientes inativos (ou seja, quando atrasarem a matrícula, não podem ter planos de treino)

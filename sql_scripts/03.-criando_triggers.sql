@@ -1,3 +1,44 @@
+---- TRIGGERS AUDITORIA ----
+CREATE OR REPLACE FUNCTION registrar_auditoria()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO auditoria (tabela, operacao, data_operacao, usuario)
+    VALUES (
+        TG_TABLE_NAME,
+        TG_OP,                              
+        NOW(),
+				current_user
+    );
+    RETURN NEW;  -- Retorna o novo registro para operações INSERT e UPDATE
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_auditoria
+AFTER INSERT OR UPDATE OR DELETE ON matricula
+FOR EACH ROW
+EXECUTE FUNCTION registrar_auditoria();
+
+CREATE TRIGGER auditoria_produto
+AFTER INSERT OR UPDATE OR DELETE ON produto
+FOR EACH ROW
+EXECUTE FUNCTION registrar_auditoria();
+
+CREATE TRIGGER auditoria_venda
+AFTER INSERT OR UPDATE OR DELETE ON venda
+FOR EACH ROW
+EXECUTE FUNCTION registrar_auditoria();
+
+CREATE TRIGGER auditoria_cliente
+AFTER INSERT OR UPDATE OR DELETE ON cliente
+FOR EACH ROW
+EXECUTE FUNCTION registrar_auditoria();
+
+CREATE TRIGGER auditoria_instrutor
+AFTER INSERT OR UPDATE OR DELETE ON instrutor
+FOR EACH ROW
+EXECUTE FUNCTION registrar_auditoria();
+
+
 ----- TRIGGERS ITEM_VENDA ------
 -- Trigger que decrementa a quantidade de um produto na tabela PRODUTO conforme for inserido em ITEM_VENDA
 CREATE OR REPLACE FUNCTION decrementar_item_comprado()

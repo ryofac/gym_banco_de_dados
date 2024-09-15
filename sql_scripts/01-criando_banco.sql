@@ -98,7 +98,8 @@ CREATE TABLE
       valor_total DECIMAL,
       dt_venda TIMESTAMP,
       dt_venda_final TIMESTAMP DEFAULT NULL,
-      status VARCHAR(20) DEFAULT 'PENDENTE'
+      status VARCHAR(20) DEFAULT 'PENDENTE',
+      CHECK (status IN ('CONCLUIDA', 'PENDENTE', 'CANCELADA'))
    );
 
 CREATE TABLE
@@ -109,4 +110,10 @@ CREATE TABLE
    );
 
 CREATE TABLE
-   sequencia ()
+   auditoria (
+      id SERIAL PRIMARY KEY,
+      tabela VARCHAR NOT NULL,
+      operacao VARCHAR NOT NULL,
+      data_operacao TIMESTAMP DEFAULT NOW (),
+      usuario VARCHAR
+   );
