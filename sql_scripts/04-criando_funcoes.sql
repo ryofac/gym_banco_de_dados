@@ -205,15 +205,6 @@ BEGIN
         FORMAT('quantidade = quantidade - %s', QTD),
         FORMAT('id_venda = %s AND id_produto = %s', VENDA_ID, PRODUTO_ID)
     );
-    
-    -- Atualizar a quantidade de produtos no estoque
-    PERFORM ALTERAR_DADO (
-        'produto',
-        FORMAT('qnt_em_estoque = qnt_em_estoque + %s', QTD),
-        FORMAT('id_produto = %s', PRODUTO_ID)
-    );
-
-    -- 
 END;
 $$
 LANGUAGE PLPGSQL;
