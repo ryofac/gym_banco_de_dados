@@ -104,12 +104,23 @@ BEGIN
 	IF NOT EXISTS(SELECT * FROM PRODUTO P WHERE P.ID_PRODUTO = PRODUTO_ID) THEN
 		RAISE EXCEPTION 'Produto de id % não encontrado!', PRODUTO_ID;
 	END IF;
-	
-	PERFORM INSERIR_DADOS(
-        'item_venda', 
-        'id_produto, id_venda, quantidade', 
-        format('%s, %s, %s', PRODUTO_ID, VENDA_ID, QUANTIDADE)
-  );
+
+    -- CONFERIR na tabela item_venda se já existe algum produto está sendo vendido, se sim inserir dado
+    IF NOT EXISTS( SELECT * FROM ITEM_VENDA WHERE ID_VENDA = VENDA_ID AND ID_PRODUTO = PRODUTO_ID) THEN
+        PERFORM INSERIR_DADOS(
+            'item_venda', 
+            'id_produto, id_venda, quantidade', 
+            format('%s, %s, %s', PRODUTO_ID, VENDA_ID, QUANTIDADE)
+    );
+    ELSE
+        -- Se não, Alterar o registro que já existe
+        PERFORM ALTERAR_DADO(
+            'item_venda',
+            format('quantidade = quantidade + %s', QUANTIDADE),
+            format('id_venda = %s and id_produto = %s', venda_id, produto_id)
+        );
+        
+    END IF;
 
 	RAISE INFO 'INSERINDO % PRODUTOS NA VENDA %S', quantidade, venda_id;
 	
@@ -144,7 +155,7 @@ BEGIN
     RAISE EXCEPTION 'Venda de id % não encontrada ou já confirmada/cancelada!', VENDA_ID;
   END IF;
 
- UPDATE VENDA SET status='CANCELADO' WHERE ID_VENDA = VENDA_ID;
+ UPDATE VENDA SET status='CANCELADA' WHERE ID_VENDA = VENDA_ID;
 
 -- RETORNA A QUANTIDADE DE PRODUTOS DA VENDA QUE ESTAVA PENDENTE PARA O ESTOQUE
  FOR prod IN
