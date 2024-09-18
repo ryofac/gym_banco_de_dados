@@ -16,3 +16,8 @@ CREATE TRIGGER trigger_cpf_duplicado
 BEFORE INSERT OR UPDATE ON cliente
 FOR EACH ROW
 EXECUTE FUNCTION verificar_cpf_duplicado();
+
+CREATE TRIGGER trigger_cpf_duplicado
+BEFORE INSERT OR UPDATE ON instrutor
+FOR EACH ROW
+EXECUTE FUNCTION verificar_cpf_duplicado();

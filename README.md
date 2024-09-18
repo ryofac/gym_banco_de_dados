@@ -38,7 +38,8 @@
 - [x] Conferir se o cliente e funcionário existem ao realizar a venda
 - [ ] Funções de relatório (Obter lucro com matrículas entre X e Y, quantos clientes novos cadastrados, quantas vendas realizadas, etc.)
 - [x] Controle de permissões (Criar usuários, grupos e roles interagindo com views)
-- [ ] Adicionar dias da semana junto ao plano de treino
+- [x] Adicionar dias da semana junto ao plano de treino
+- [ ] Adicionar meio de remover ou alterar itens de uma venda
 
 ### Melhorias
 
