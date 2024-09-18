@@ -345,4 +345,4 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_proibir_exercicio_mesmo_dia
 BEFORE INSERT ON plano_treino_exercicio
 FOR EACH ROW
-EXECUTE FUNCTION verificar_exercicio_no_mesmo_dia();
+EXECUTE FUNCTION proibir_exercicio_mesmo_dia();
