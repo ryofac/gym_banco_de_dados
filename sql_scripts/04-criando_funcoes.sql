@@ -111,7 +111,7 @@ BEGIN
         format('%s, %s, %s', PRODUTO_ID, VENDA_ID, QUANTIDADE)
   );
 
-	RAISE INFO 'INSERINDO % PRODUTOS NA VENDA %S', quantidade, venda_id;
+	RAISE INFO 'INSERINDO % PRODUTOS NA VENDA %', quantidade, venda_id;
 	
 END;
 $$
@@ -131,6 +131,7 @@ BEGIN
         'status = ''CONCLUIDA'', dt_venda_final = NOW()', 
         FORMAT('id_venda = %s', VENDA_ID)
     );
+    RAISE INFO 'Venda de id % confirmada!', VENDA_ID;
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -159,6 +160,50 @@ BEGIN
 		WHERE id_produto = prod.id_produto;
 	 END LOOP;	
 END
+$$
+LANGUAGE PLPGSQL;
+
+-- Remover um produto de uma venda
+CREATE OR REPLACE FUNCTION REMOVER_PRODUTO_DA_VENDA(VENDA_ID INT, PRODUTO_ID INT, QTD INT)
+RETURNS VOID AS $$
+DECLARE
+BEGIN
+    -- Verificar se a venda existe
+    IF NOT EXISTS (SELECT * FROM VENDA WHERE ID_VENDA = VENDA_ID) THEN
+        RAISE EXCEPTION 'Venda de id % não encontrada!', VENDA_ID;
+    END IF;
+	
+    -- Verificar se o produto existe
+    IF NOT EXISTS (SELECT * FROM PRODUTO WHERE ID_PRODUTO = PRODUTO_ID) THEN
+        RAISE EXCEPTION 'Produto de id % não encontrado!', PRODUTO_ID;
+    END IF;
+
+    -- Verificar se o produto existe na venda
+    IF NOT EXISTS (SELECT * FROM ITEM_VENDA WHERE ID_VENDA = VENDA_ID AND ID_PRODUTO = PRODUTO_ID) THEN
+        RAISE EXCEPTION 'Produto de id % não encontrado na venda de id %!', PRODUTO_ID, VENDA_ID;
+    END IF;
+
+    -- Verificar se a venda possui a quantidade de produtos a ser removida, por meio da tabela item_venda
+    IF (SELECT QUANTIDADE FROM ITEM_VENDA WHERE ID_VENDA = VENDA_ID AND ID_PRODUTO = PRODUTO_ID) < QTD THEN
+        RAISE EXCEPTION 'Venda de id % não possui % unidades do produto de id %!', VENDA_ID, QTD, PRODUTO_ID;
+    END IF;
+
+    -- Atualizar a quantidade de produtos na venda
+    PERFORM ALTERAR_DADO (
+        'item_venda',
+        FORMAT('quantidade = quantidade - %s', QTD),
+        FORMAT('id_venda = %s AND id_produto = %s', VENDA_ID, PRODUTO_ID)
+    );
+    
+    -- Atualizar a quantidade de produtos no estoque
+    PERFORM ALTERAR_DADO (
+        'produto',
+        FORMAT('qnt_em_estoque = qnt_em_estoque + %s', QTD),
+        FORMAT('id_produto = %s', PRODUTO_ID)
+    );
+
+    -- 
+END;
 $$
 LANGUAGE PLPGSQL;
 
