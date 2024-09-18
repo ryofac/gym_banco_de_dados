@@ -44,47 +44,88 @@ EXECUTE FUNCTION registrar_auditoria();
 CREATE OR REPLACE FUNCTION decrementar_item_comprado()
 RETURNS TRIGGER AS $$
 DECLARE QNT_TOTAL_PRODUTO INT;
+DECLARE NOME_PRODUTO VARCHAR;
+DECLARE DIFERENCA_PRODUTO_ANTERIOR INT;
 BEGIN
 	SELECT qnt_em_estoque INTO QNT_TOTAL_PRODUTO from produto
 	WHERE ID_PRODUTO = NEW.ID_PRODUTO;
+
+	SELECT NOME INTO NOME_PRODUTO from produto
+	WHERE ID_PRODUTO = NEW.ID_PRODUTO;
+
 
   IF (QNT_TOTAL_PRODUTO < 10) 
   THEN RAISE INFO 'Produto de id % está acabando! % restantes', NEW.ID_PRODUTO, QNT_TOTAL_PRODUTO;
   END IF;
 
-	IF (QNT_TOTAL_PRODUTO < NEW.QUANTIDADE) THEN
-		RAISE EXCEPTION 'Quantidade em estoque (%) insuficiente', QNT_TOTAL_PRODUTO;
+	-- Caso inserção: atualizar somente a nova quantidade inserida
+	IF TG_OP = 'INSERT' THEN
+
+		IF (QNT_TOTAL_PRODUTO < NEW.QUANTIDADE) THEN
+			RAISE EXCEPTION 'Quantidade em estoque (%) insuficiente para o produto %', QNT_TOTAL_PRODUTO, NOME_PRODUTO;
+		END IF;
+
+		UPDATE PRODUTO 
+		SET qnt_em_estoque = qnt_em_estoque - NEW.QUANTIDADE
+		WHERE id_produto = NEW.id_produto;
+		RETURN NEW;
 	END IF;
 
-	UPDATE PRODUTO 
-	SET qnt_em_estoque = qnt_em_estoque - NEW.QUANTIDADE
-	WHERE id_produto = NEW.id_produto;
-	RETURN NEW;
+	-- Caso atualização: atualizar a diferença entre a quantidade anterior e a nova
+	IF TG_OP = 'UPDATE' THEN
+
+		IF (QNT_TOTAL_PRODUTO < (NEW.QUANTIDADE - OLD.QUANTIDADE)) THEN
+			RAISE EXCEPTION 'Quantidade em estoque (%) insuficiente para o produto %', QNT_TOTAL_PRODUTO, NOME_PRODUTO;
+		END IF;
+
+		UPDATE PRODUTO
+		SET qnt_em_estoque = qnt_em_estoque - (NEW.QUANTIDADE - OLD.QUANTIDADE)
+		WHERE id_produto = NEW.id_produto;
+		RETURN NEW;
+	END IF;
 
 END;
 $$
 LANGUAGE PLPGSQL;
 
 CREATE TRIGGER TRG_DECREMENTAR_ESTOQUE
-AFTER INSERT ON ITEM_VENDA
+AFTER INSERT OR UPDATE ON ITEM_VENDA
 FOR EACH ROW
 EXECUTE FUNCTION decrementar_item_comprado();
 
 -- Trigger que atualiza informações de uma venda quando uma linha for inserida na tabela ITEM_VENDA
 CREATE OR REPLACE FUNCTION ATUALIZAR_INFORMACOES_DA_VENDA()
 RETURNS TRIGGER AS $$
-BEGIN	
-	UPDATE venda
-  SET qnt_produtos = qnt_produtos + NEW.quantidade,
-      valor_total = valor_total + (SELECT valor_unitario FROM produto WHERE id_produto = NEW.id_produto) * NEW.quantidade
-  WHERE id_venda = NEW.id_venda;
-	RETURN NEW;
+DECLARE DIFF_QUANT INT;
+BEGIN
+		IF TG_OP = 'INSERT' THEN
+			UPDATE venda
+			SET qnt_produtos = qnt_produtos + NEW.quantidade,
+					valor_total = valor_total + (SELECT valor_unitario FROM produto WHERE id_produto = NEW.id_produto) * NEW.quantidade
+			WHERE id_venda = NEW.id_venda;
+			
+		END IF;
+
+		
+		IF TG_OP = 'UPDATE' THEN
+			DIFF_QUANT := NEW.quantidade - OLD.quantidade;
+
+			UPDATE venda
+			SET qnt_produtos = qnt_produtos + DIFF_QUANT,
+					valor_total = valor_total + (SELECT valor_unitario FROM produto WHERE id_produto = NEW.id_produto) * DIFF_QUANT
+			WHERE id_venda = NEW.id_venda;
+
+		END IF;
+
+		RETURN NEW;
+
+
 END;
 $$
 LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE TRIGGER TRG_ATUALIZAR_INFORMACOES_DA_VENDA
-AFTER INSERT ON ITEM_VENDA
+AFTER INSERT OR UPDATE ON ITEM_VENDA
 FOR EACH ROW 
 EXECUTE FUNCTION ATUALIZAR_INFORMACOES_DA_VENDA();
 
