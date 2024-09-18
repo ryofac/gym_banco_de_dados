@@ -43,7 +43,7 @@ BEGIN
 
     -- Verificar se o instrutor já existe
     IF EXISTS(SELECT * FROM INSTRUTOR WHERE CPF = CPF_INSTRUTOR) THEN
-        RAISE EXCEPTION 'Instrutor com CPF % já cadastrado!', CPF;
+        RAISE EXCEPTION 'Instrutor com CPF % já cadastrado!', CPF_INSTRUTOR;
     END IF;
 
     PERFORM INSERIR_DADOS(

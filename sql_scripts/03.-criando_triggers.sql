@@ -165,43 +165,43 @@ BEFORE INSERT ON MATRICULA
 FOR EACH ROW 
 EXECUTE FUNCTION RENOVAR_MATRICULA();
 
- -- Aplica uma multa para uma matrícula, caso ela não tenha sido renovada dentro do prazo:
- CREATE OR REPLACE FUNCTION aplicar_multa()
- RETURNS TRIGGER AS $$
- DECLARE
-	 ultimo_pagamento RECORD;
-     dias_atraso INT;
-     valor_multa DECIMAL;
- BEGIN
- 		-- pegar o ultimo registro do cara na tabela
-		SELECT * INTO ultimo_pagamento FROM OBTER_ULTIMA_MATRICULA_DO_CLIENTE(NEW.ID_CLIENTE);
- 		-- verificar a data de vencimento, se for menor que hoje, aplica multa
+--  -- Aplica uma multa para uma matrícula, caso ela não tenha sido renovada dentro do prazo:
+--  CREATE OR REPLACE FUNCTION aplicar_multa()
+--  RETURNS TRIGGER AS $$
+--  DECLARE
+-- 	 ultimo_pagamento RECORD;
+--      dias_atraso INT;
+--      valor_multa DECIMAL;
+--  BEGIN
+--  		-- pegar o ultimo registro do cara na tabela
+-- 		SELECT * INTO ultimo_pagamento FROM OBTER_ULTIMA_MATRICULA_DO_CLIENTE(NEW.ID_CLIENTE);
+--  		-- verificar a data de vencimento, se for menor que hoje, aplica multa
 
-     IF ultimo_pagamento IS NOT NULL THEN
-		IF ultimo_pagamento.dt_vencimento > NEW.dt_pagamento THEN
-			RETURN NEW; -- Não houve multa
-		END IF;
+--      IF ultimo_pagamento IS NOT NULL THEN
+-- 		IF ultimo_pagamento.dt_vencimento > NEW.dt_pagamento THEN
+-- 			RETURN NEW; -- Não houve multa
+-- 		END IF;
 		
-		-- Calcular o número de dias de atraso
-         dias_atraso := (NEW.dt_pagamento - ultimo_pagamento.dt_vencimento)::INT;
+-- 		-- Calcular o número de dias de atraso
+--          dias_atraso := (NEW.dt_pagamento - ultimo_pagamento.dt_vencimento)::INT;
 
-         -- Definir o valor da multa (Exemplo: 2% do valor total por dia de atraso)
-         valor_multa := (NEW.valor_pago * 0.02 * dias_atraso);
+--          -- Definir o valor da multa (Exemplo: 2% do valor total por dia de atraso)
+--          valor_multa := (NEW.valor_pago * 0.02 * dias_atraso);
 
-         -- Atualizar o valor pago com a multa
-         NEW.valor_pago := (NEW.valor_pago + valor_multa)::DECIMAL;
+--          -- Atualizar o valor pago com a multa
+--          NEW.valor_pago := (NEW.valor_pago + valor_multa)::DECIMAL;
 
-         RAISE NOTICE 'Multa aplicada: R$%, por % dias de atraso.', valor_multa, dias_atraso;
-     END IF;
+--          RAISE NOTICE 'Multa aplicada: R$%, por % dias de atraso.', valor_multa, dias_atraso;
+--      END IF;
 
-     RETURN NEW;
- END;
- $$ LANGUAGE plpgsql;
+--      RETURN NEW;
+--  END;
+--  $$ LANGUAGE plpgsql;
 
- CREATE TRIGGER trg_aplicar_multa
- BEFORE INSERT OR UPDATE ON matricula
- FOR EACH ROW
- EXECUTE FUNCTION aplicar_multa();
+--  CREATE TRIGGER trg_aplicar_multa
+--  BEFORE INSERT OR UPDATE ON matricula
+--  FOR EACH ROW
+--  EXECUTE FUNCTION aplicar_multa();
 
 -- Caso o cliente não esteja matriculado, ele não pode receber um plano de treino
 CREATE OR REPLACE FUNCTION PROIBIR_PLANO_TREINO_PARA_CLIENTE_NAO_MATRICULADO()
@@ -325,3 +325,24 @@ BEFORE UPDATE ON VENDA
 FOR EACH ROW
 WHEN (NEW.STATUS IS DISTINCT FROM OLD.STATUS)
 EXECUTE FUNCTION DAR_DESCONTO_CASO_CLIENTE_ATIVO();
+
+
+CREATE OR REPLACE FUNCTION proibir_exercicio_mesmo_dia()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM plano_treino_exercicio 
+        WHERE id_plano = NEW.id_plano 
+        AND dia_semana = NEW.dia_semana
+    ) THEN
+        RAISE EXCEPTION 'Não é permitido adicionar dois exercícios no mesmo plano de treino para o mesmo dia da semana: %', NEW.dia_semana;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_proibir_exercicio_mesmo_dia
+BEFORE INSERT ON plano_treino_exercicio
+FOR EACH ROW
+EXECUTE FUNCTION verificar_exercicio_no_mesmo_dia();

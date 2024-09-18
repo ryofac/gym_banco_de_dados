@@ -80,12 +80,32 @@ CREATE TABLE
       dt_vencimento DATE
    );
 
+-- Tabela acessória para computar o dia da semana de determinado
+-- exercício
+CREATE TABLE
+   dia_semana (
+      id_dia INT PRIMARY KEY,
+      nome_dia VARCHAR(15) NOT NULL
+   );
+
+INSERT INTO
+   dia_semana (id_dia, nome_dia)
+VALUES
+   (1, 'Domingo'),
+   (2, 'Segunda-feira'),
+   (3, 'Terça-feira'),
+   (4, 'Quarta-feira'),
+   (5, 'Quinta-feira'),
+   (6, 'Sexta-feira'),
+   (7, 'Sábado');
+
 CREATE TABLE
    plano_treino_exercicio (
       id_exercicio INT REFERENCES exercicio (id_exercicio) ON DELETE CASCADE,
       id_plano INT REFERENCES plano_treino (id_plano) ON DELETE CASCADE,
       repeticoes INT,
-      carga DECIMAL
+      carga DECIMAL,
+      dia_semana INT REFERENCES DIA_SEMANA (ID_DIA)
    );
 
 -- Sistema de vendas

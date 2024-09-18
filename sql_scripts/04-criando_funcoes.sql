@@ -18,7 +18,6 @@ CREATE OR REPLACE FUNCTION alterar_dado(tabela TEXT, atualizacao TEXT, condicao 
 DECLARE
     sql_command TEXT;
 BEGIN
-    -- Construa o comando SQL dinâmico para atualização
     sql_command := FORMAT('UPDATE %I SET %s WHERE %s', tabela, atualizacao, condicao);
     
     EXECUTE sql_command;
@@ -34,7 +33,6 @@ CREATE OR REPLACE FUNCTION remover_dado(tabela TEXT, condicao TEXT) RETURNS VOID
 DECLARE
     sql_command TEXT;
 BEGIN    
-    -- Construa o comando SQL dinâmico para remoção
     sql_command := FORMAT('DELETE FROM %I WHERE %s', tabela, condicao);
     
     EXECUTE sql_command;
@@ -239,7 +237,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Adiciona um exercício à um plano de treino
-CREATE OR REPLACE FUNCTION ADICIONAR_EXERCICIO_NO_TREINO(PLANO_ID INT, EXERCICIO_ID INT, REPETICOES INT, CARGA INT)
+CREATE OR REPLACE FUNCTION ADICIONAR_EXERCICIO_NO_TREINO(PLANO_ID INT, EXERCICIO_ID INT, REPETICOES INT, CARGA INT, NUM_DIA_SEMANA INT)
 RETURNS VOID AS $$
 BEGIN
 	IF NOT EXISTS(SELECT * FROM PLANO_TREINO WHERE ID_PLANO = PLANO_ID) THEN
@@ -249,16 +247,104 @@ BEGIN
 	IF NOT EXISTS(SELECT * FROM EXERCICIO WHERE ID_EXERCICIO = EXERCICIO_ID) THEN
 		RAISE EXCEPTION 'Exercício % não existe!', TREINO_ID;
 	END IF;
+
+	IF NOT EXISTS(SELECT * FROM DIA_SEMANA WHERE ID_DIA = NUM_DIA_SEMANA) THEN
+		RAISE EXCEPTION 'Dia da semana fornecido: %s inválido', NUM_DIA_SEMANA;
+	END IF;
+		
 	
 	PERFORM INSERIR_DADOS(
         'plano_treino_exercicio',
-        'id_exercicio, id_plano, repeticoes, carga',
-        FORMAT('%s, %s, %s, %s', EXERCICIO_ID, PLANO_ID, REPETICOES, CARGA)
+        'id_exercicio, id_plano, repeticoes, carga, dia_semana',
+        FORMAT('%s, %s, %s, %s, %s', EXERCICIO_ID, PLANO_ID, REPETICOES, CARGA, NUM_DIA_SEMANA)
     );
 
   RAISE INFO 'Exercício % adicionado ao plano de treino %!', EXERCICIO_ID, PLANO_ID;
 
 
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+
+CREATE OR REPLACE FUNCTION ALTERAR_EXERCICIO_NO_TREINO(
+    PLANO_ID INT, 
+    EXERCICIO_ID INT,
+    DIA_DA_SEMANA_ INT, 
+    NOVAS_REPETICOES INT, 
+    NOVA_CARGA INT, 
+    NOVO_DIA_SEMANA INT
+)
+RETURNS VOID AS $$
+DECLARE DIA_DA_SEMANA_STR VARCHAR;
+BEGIN
+    -- Verifica se o plano de treino existe
+    IF NOT EXISTS (SELECT * FROM PLANO_TREINO WHERE ID_PLANO = PLANO_ID) THEN
+        RAISE EXCEPTION 'Treino % não existe!', PLANO_ID;
+    END IF;
+
+    -- Verifica se o exercício existe
+    IF NOT EXISTS (SELECT * FROM EXERCICIO WHERE ID_EXERCICIO = EXERCICIO_ID) THEN
+        RAISE EXCEPTION 'Exercício % não existe!', EXERCICIO_ID;
+    END IF;
+
+    -- Verifica se o dia da semana fornecido é válido
+    IF NOT EXISTS (SELECT * FROM DIA_SEMANA WHERE ID_DIA = NOVO_DIA_SEMANA) THEN
+        RAISE EXCEPTION 'Dia da semana fornecido: %s inválido', NOVO_DIA_SEMANA;
+    END IF;
+
+	SELECT * INTO DIA_DA_SEMANA_STR FROM DIA_SEMANA WHERE ID_DIA = DIA_DA_SEMANA_;
+
+    -- Verifica se a combinação exercício/plano/dia-da-semana existe
+    IF EXISTS (SELECT * FROM PLANO_TREINO_EXERCICIO WHERE ID_EXERCICIO = EXERCICIO_ID AND ID_PLANO = PLANO_ID AND DIA_SEMANA = DIA_DA_SEMANA_) THEN
+        UPDATE PLANO_TREINO_EXERCICIO
+        SET 
+            REPETICOES = NOVAS_REPETICOES,
+            CARGA = NOVA_CARGA,
+            DIA_SEMANA = NOVO_DIA_SEMANA
+        WHERE ID_EXERCICIO = EXERCICIO_ID AND ID_PLANO = PLANO_ID AND DIA_SEMANA = DIA_DA_SEMANA_;
+	
+        RAISE INFO 'Exercício % que ocorre no(a) % no plano de treino % foi atualizado!', EXERCICIO_ID, DIA_DA_SEMANA_STR, PLANO_ID;
+    ELSE
+        RAISE EXCEPTION 'A combinação de exercício % e plano % não existe!', EXERCICIO_ID, PLANO_ID;
+    END IF;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+CREATE OR REPLACE FUNCTION DELETAR_EXERCICIO_DO_TREINO(
+    PLANO_ID INT, 
+    EXERCICIO_ID INT,
+		DIA_DA_SEMANA INT
+)
+RETURNS VOID AS $$
+BEGIN
+    -- Verifica se o plano de treino existe
+    IF NOT EXISTS (SELECT * FROM PLANO_TREINO WHERE ID_PLANO = PLANO_ID) THEN
+        RAISE EXCEPTION 'Treino % não existe!', PLANO_ID;
+    END IF;
+
+    -- Verifica se o exercício existe
+    IF NOT EXISTS (SELECT * FROM EXERCICIO WHERE ID_EXERCICIO = EXERCICIO_ID) THEN
+        RAISE EXCEPTION 'Exercício % não existe!', EXERCICIO_ID;
+    END IF;
+
+		-- Verifica se o dia da semana eh valido
+		IF NOT EXISTS (SELECT * FROM DIA_SEMANA WHERE ID_DIA = NOVO_DIA_SEMANA) THEN
+        RAISE EXCEPTION 'Dia da semana fornecido: %s inválido', NOVO_DIA_SEMANA;
+    END IF;
+
+		-- DELETA CASO EXISTA A COMBINACAO DOS TRES
+    IF EXISTS (SELECT * FROM PLANO_TREINO_EXERCICIO WHERE ID_EXERCICIO = EXERCICIO_ID AND ID_PLANO = PLANO_ID AND DIA_SEMANA = DIA_DA_SEMANA) THEN
+        DELETE FROM PLANO_TREINO_EXERCICIO 
+        WHERE ID_EXERCICIO = EXERCICIO_ID AND ID_PLANO = PLANO_ID AND DIA_SEMANA = DIA_DA_SEMANA;
+
+        RAISE INFO 'Exercício % foi removido do plano de treino %!', EXERCICIO_ID, PLANO_ID;
+    ELSE
+        RAISE EXCEPTION 'A combinação de exercício % e plano % não existe!', EXERCICIO_ID, PLANO_ID;
+    END IF;
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -270,7 +356,8 @@ RETURNS TABLE
 	nome_exercicio VARCHAR, 
 	equipamento VARCHAR, 
 	carga NUMERIC, 
-	repeticoes INT
+	repeticoes INT,
+	dia_da_semana VARCHAR
 ) 
 AS $$
 BEGIN	
@@ -284,7 +371,8 @@ BEGIN
 		e.nome nome_exercicio,
 		eq.nome equipamento,
 		pte.carga carga,
-		pte.repeticoes repeticoes
+		pte.repeticoes repeticoes,
+		ds.nome_dia dia_da_semana
 	FROM PLANO_TREINO pt
 	JOIN CLIENTE c 
 	ON c.id_plano = pt.id_plano 
@@ -293,6 +381,7 @@ BEGIN
 	ON pt.id_plano = pte.id_plano
 	JOIN exercicio e 
 	ON e.id_exercicio = pte.id_exercicio
+	JOIN DIA_SEMANA DS ON PTE.DIA_SEMANA = DS.ID_DIA
 	LEFT JOIN equipamento eq ON e.id_eq = eq.id_eq;
 	
 END;

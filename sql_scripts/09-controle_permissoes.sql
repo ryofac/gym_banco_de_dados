@@ -89,7 +89,7 @@ UPDATE ON plano_treino TO instrutor;
 -- Conceder permissões de execução apenas nas funções que manipulam plano de treino e cliente
 GRANT EXECUTE ON FUNCTION criar_plano_de_treino (int, int, varchar, varchar) TO instrutor;
 
-GRANT EXECUTE ON FUNCTION adicionar_exercicio_no_treino (int, int, int, int) TO instrutor;
+GRANT EXECUTE ON FUNCTION adicionar_exercicio_no_treino (int, int, int, int, int) TO instrutor;
 
 GRANT EXECUTE ON FUNCTION visualizar_plano_treino (int) TO instrutor;
 
