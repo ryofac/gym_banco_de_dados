@@ -355,7 +355,6 @@ BEGIN
 		
 		RAISE INFO 'O cliente de id % é um cliente massa, ele está matriculado na academia! por isso ganhou um desconto de 25%% em cima do valor do pacote (R$%), que dá (R$%)', 
 		NEW.ID_CLIENTE, pacote.valor, desconto;
-		
 	END IF;
 	RETURN NEW;
 END;

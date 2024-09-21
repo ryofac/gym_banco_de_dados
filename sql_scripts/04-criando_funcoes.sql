@@ -61,7 +61,7 @@ BEGIN
 
      -- Não vender para clientes que estão com a mensalidade atrasada
      IF ultima_matricula_do_cliente IS NOT NULL THEN
-		IF (ultima_matricula_do_cliente.dt_vencimento > NOW()) THEN
+		IF (ultima_matricula_do_cliente.dt_vencimento < NOW()) THEN
         	RAISE EXCEPTION 'Cliente de id % É CALOREIRO, está com a matrícula atrasada!', CLIENTE_ID;
 		END IF;
      END IF;
@@ -71,6 +71,8 @@ BEGIN
         'id_cliente, id_funcionario, qnt_produtos, valor_total, dt_venda', 
         format(' %s, %s, 0, 0, NOW()', CLIENTE_ID, FUNCIONARIO_ID)
     );
+
+    RAISE INFO 'Cliente de id % iniciou uma venda', CLIENTE_ID; 
 END;
 $$
 LANGUAGE PLPGSQL;
@@ -256,6 +258,8 @@ BEGIN
         FORMAT('%s, %s, %s, %s, NOW(), NOW() + INTERVAL ''1 day'' * %s', 
             CLIENTE_ID, FUNCIONARIO_ID, PACOTE_ID, pacote.valor, pacote.duracao_dias)
   );
+    
+    RAISE INFO 'Matrícula do cliente de id % realizada pelo funcionário %', CLIENTE_ID, FUNCIONARIO_ID;
 END;
 $$ LANGUAGE PLPGSQL;
 
