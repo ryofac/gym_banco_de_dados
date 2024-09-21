@@ -10,7 +10,8 @@ CREATE TABLE
    funcionario (
       id_funcionario SERIAL PRIMARY KEY,
       nome VARCHAR(255),
-      telefone VARCHAR(20)
+      telefone VARCHAR(20),
+      INATIVO BOOLEAN DEFAULT FALSE
    );
 
 CREATE TABLE
@@ -65,7 +66,8 @@ CREATE TABLE
       id_cliente SERIAL PRIMARY KEY,
       id_plano INT REFERENCES PLANO_TREINO (id_plano) ON DELETE SET NULL DEFAULT NULL,
       nome VARCHAR(255),
-      cpf VARCHAR(11) UNIQUE
+      cpf VARCHAR(11) UNIQUE,
+      INATIVO BOOLEAN DEFAULT FALSE
    );
 
 -- Sistema base da academia:
